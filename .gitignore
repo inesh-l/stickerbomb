@@ -130,4 +130,4 @@ dist
 .pnp.*
 
 # torch dataset
-segmentation_model/data
+segmentation_model/dataset
