@@ -44,19 +44,19 @@ def tensor_trimap(t):
 
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Resize((128, 128), antialias=True),
+    transforms.Resize((128, 128), antialias=False),
     transforms.RandomHorizontalFlip(p=0.5),
     transforms.ColorJitter(contrast=0.3),
 ])
 
 target_transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Resize((128, 128), antialias=True),
+    transforms.Resize((128, 128), antialias=False),
     transforms.RandomHorizontalFlip(p=0.5),
-    transforms.Lambda(tensor_trimap)
+    transforms.Lambda(tensor_trimap),
 ])
 pets_train_loader, pets_test_loader = get_data(
-    batch_size=64,
+    batch_size=32,
     transform=transform,
     target_transform=target_transform,
     num_workers=4,
@@ -64,7 +64,5 @@ pets_train_loader, pets_test_loader = get_data(
 )
 (train_pets_inputs, train_pets_targets) = next(iter(pets_train_loader))
 (test_pets_inputs, test_pets_targets) = next(iter(pets_test_loader))
-m = UNet()
-m.eval()
-m.to('cuda')
-print(m(train_pets_inputs.to('cuda')).shape)
+
+pets_targets_grid = torchvision.utils.make_grid(train_pets_targets.float() / 2.0, nrow=8)

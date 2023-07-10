@@ -2,7 +2,7 @@ import torch.nn as nn
 import unet_components as components
 
 class UNet(nn.Module):
-    def __init__(self, n_channels=3, n_classes=3):
+    def __init__(self, n_channels=3, n_classes=1):
         super(UNet, self).__init__()
         self.inc = components.InputConvolution(n_channels, 64)
         self.down1 = components.DownConvolution(64, 128)

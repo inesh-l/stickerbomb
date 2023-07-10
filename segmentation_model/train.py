@@ -24,41 +24,41 @@ def train(loader, model, optim, loss_fn, scaler):
     loop = tqdm(loader)
     for batch_idx, (data, targets) in enumerate(loop):
         data = data.to(device=device)
-        targets = targets.float().unsqueeze(1).to(device=device)
+        targets = targets.float().to(device=device)
 
-    # forward
-    with torch.set_grad_enabled(True):
-        predictions = model(data)
-        loss = loss_fn(predictions, targets)
-    
-    # backward
-    optim.zero_grad()
-    scaler.scale(loss).backward()
-    scaler.step(optim)
-    scaler.update()
+        # forward
+        with torch.cuda.amp.autocast():
+            predictions = model(data)
+            loss = loss_fn(predictions, targets)
+        
+        # backward
+        optim.zero_grad()
+        scaler.scale(loss).backward()
+        scaler.step(optim)
+        scaler.update()
 
-    # update tqdm loop
-    loop.set(postfix={'loss': loss.item()})
+        # update tqdm loop
+        loop.set_postfix(loss=loss.item())
 
 def main():
     
 
     transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Resize((128, 128), antialias=True),
+    transforms.Resize((128, 128), antialias=False),
     transforms.RandomHorizontalFlip(p=0.5),
     transforms.ColorJitter(contrast=0.3),
     ])
 
     target_transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Resize((128, 128), antialias=True),
+        transforms.Resize((128, 128), antialias=False),
         transforms.RandomHorizontalFlip(p=0.5),
-        transforms.Lambda(tensor_trimap)
+        transforms.Lambda(tensor_trimap),
     ])
 
 
-    model = UNet(n_channels=3, n_classes=1).to(device)
+    model = UNet().to(device)
     loss_fn = nn.BCEWithLogitsLoss()
     optim = torch.optim.Adam(model.parameters(), lr=learning_rate)
     train_data, test_data = get_data(
@@ -91,7 +91,7 @@ def main():
 
         # print some examples to a folder
         save_predictions_as_imgs(
-            test_data, model, folder="saved_images/", device=device
+            test_data, model, folder="segmentation_model/saved_images/", device=device
         )
 
 
